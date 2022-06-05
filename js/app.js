@@ -1,93 +1,81 @@
-let date = document.querySelector("#weather-date");
-let days = document.querySelectorAll(".day__block");
-let description = document.querySelector("#weather-description");
-let icon = document.querySelector(".weather__icon--today");
-let place = document.querySelector("#weather-location");
-let precipitation = document.querySelector("#precipitation-probality");
-let temperature = document.querySelector(".weather-temp--today");
-let wind = document.querySelector("#wind-speed");
-let refreshBtn = document.querySelector("#weather-refresh");
-let form = document.querySelector("#weather__form");
-let formLocation = form.querySelector("#weather__form-location");
-let root = "https://api.openweathermap.org";
-let apiKey = "5f472b7acba333cd8a035ea85a0d4d4c";
-
-function friendlyDate(date) {
-function friendlyDay(dayNumber) {
-  let days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  let minutes = date.getMinutes();
-  if (minutes < 10) minutes = "0" + minutes;
-  return days[dayNumber];
-}
-
-function friendlyMinutes(minutesNumber) {
-  if (minutesNumber < 10) {
-    return "0" + minutesNumber;
-  } else {
-    return minutesNumber;
-  }
-}
-
-function friendlyDate(date) {
-  let day = friendlyDay(date.getDay());
-  let hours = date.getHours();
-  let minutes = friendlyMinutes(date.getMinutes());
-
-  return days[date.getDay()] + " " + date.getHours() + ":" + minutes;
-  return day + " " + hours + ":" + minutes;
-}
-
-function refreshWeather(queryParams) {
-  let apiParams = "appid=" + apiKey + "&units=metric";
-  axios
-    .get(root + "/data/2.5/weather?" + apiParams + "&" + queryParams)
-    .then(function(response) {
-      date.innerHTML = friendlyDate(new Date());
-      place.innerHTML = response.data.name;
-      description.innerHTML = response.data.weather[0].main;
-      temperature.innerHTML = Math.round(response.data.main.temp);
-      wind.innerHTML = Math.round(response.data.wind.speed) + "km/h";
-      precipitation.innerHTML = Math.round(response.data.main.humidity) + "%";
-      icon.setAttribute(
-        "src",
-        "http://openweathermap.org/img/w/" +
-          response.data.weather[0].icon +
-          ".png"
-      );
-    });
-  axios
-    .get(root + "/data/2.5/forecast?" + apiParams + "&" + queryParams)
-    .then(function(response) {
-      document
-        .querySelectorAll(".day__block")
-        .forEach(function(element, index) {
-          let day = new Date(response.data.list[index].dt_txt);
-          element.querySelector(".day__block-date").innerHTML = friendlyDate(
-            day
-          );
-          element.querySelector(".day__block-temp").innerHTML = Math.round(
-            response.data.list[index].main.temp
-          );
-          element
-            .querySelector(".day__block-image")
-            .setAttribute(
-              "src",
-              "http://openweathermap.org/img/w/" +
-                response.data.list[index].weather[0].icon +
-                ".png"
-            );
-        });
-    });
-}
-form.addEventListener("submit", function(event) {
-  refreshWeather("q=" + form.querySelector("#weather__form-location").value);
+function search(event) {
   event.preventDefault();
-});
-refreshBtn.addEventListener("click", function() {
-  navigator.geolocation.getCurrentPosition(function(position) {
-    refreshWeather(
-      "lat=" + position.coords.latitude + "&lon=" + position.coords.longitude
-    );
-  });
-});
-refreshWeather("q=Lisbon");
+  let cityElement = document.querySelector("#city");
+  let cityInput = document.querySelector("#city-input");
+  cityElement.innerHTML = cityInput.value;
+  let apiKey = "e76643bfa6d843d9c5ecb52ecebf3c40";
+  let apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${cityInput.value}&appid=${apiKey}&units=metric`;
+  axios.get(apiUrl).then(showTemperture);
+}
+
+let searchForm = document.querySelector("#search-form");
+searchForm.addEventListener("submit", search);
+//---------------------------------------------------------
+function formatDate(date) {
+  let hours = date.getHours();
+  if (hours < 10) {
+    hours = `0${hours}`;
+  }
+  let minutes = date.getMinutes();
+  if (minutes < 10) {
+    minutes = `0${minutes}`;
+  }
+
+  let dayIndex = date.getDay();
+  let days = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+  let day = days[dayIndex];
+
+  return `${day} ${hours}:${minutes}`;
+}
+
+let dateElement = document.querySelector("#date");
+let currentTime = new Date();
+dateElement.innerHTML = formatDate(currentTime);
+//---------------------------------
+
+function showTemperture(responce) {
+  let temperture = document.querySelector("#temperature");
+  let temp = Math.round(responce.data.main.temp);
+  temperture.innerHTML = temp;
+  let description = document.querySelector("#description");
+  description.innerHTML = responce.data.weather[0].description;
+  let humidity = document.querySelector("#humidity");
+  humidity.innerHTML = `Humidity: ${responce.data.main.humidity}%`;
+  let wind = document.querySelector("#wind");
+  let wind1 = Math.round(responce.data.wind.speed);
+  wind.innerHTML = `Wind: ${wind1} km/h`;
+  // console.log(responce.data);
+}
+function showTemp(responce) {
+  let temperture = document.querySelector("#temperature");
+  let temp = Math.round(responce.data.main.temp);
+  temperture.innerHTML = temp;
+  let description = document.querySelector("#description");
+  description.innerHTML = responce.data.weather[0].description;
+  let humidity = document.querySelector("#humidity");
+  humidity.innerHTML = `Humidity: ${responce.data.main.humidity}%`;
+  let wind = document.querySelector("#wind");
+  let wind1 = Math.round(responce.data.wind.speed);
+  wind.innerHTML = `Wind: ${wind1} km/h`;
+}
+function showPosition(position) {
+  let latitude = position.coords.latitude;
+  let longitude = position.coords.longitude;
+  let apiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=imperial`;
+  axios.get(apiUrl).then(showTemp);
+}
+
+function getPostion() {
+  navigator.geolocation.getCurrentPosition(showPosition);
+}
+
+let button = document.querySelector("button");
+button.addEventListener("click", getPostion);
